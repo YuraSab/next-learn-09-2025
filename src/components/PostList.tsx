@@ -2,7 +2,10 @@ import {Post} from "@/types/Post";
 import PostItem from "@/components/PostItem";
 
 const PostList = async () => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+        // Додаємо опцію revalidate. Тут 60 секунд.
+        next: { revalidate: 60 }
+    });
     const posts: Post[] = await  response.json();
     // Обрізаємо список до перших 10 постів для демонстрації
     const firstTen = posts.slice(0, 10);
