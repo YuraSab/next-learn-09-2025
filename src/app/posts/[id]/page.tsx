@@ -12,8 +12,8 @@ const PostPage = async ({ params }: Props) => {
     const post: Post = await response.json();
 
     // Обробка, якщо пост не знайдено (хоча JSONPlaceholder завжди повертає об'єкт)
-    if ( !post || Object.keys(post).length === 0 )
-        return <div>No post found!</div>;
+    if (!post.id)
+        throw new Error('Failed to fetch post. Invalid ID.');
 
     return (
         <div className={"flex min-h-screen flex-col items-center p-24"}>
