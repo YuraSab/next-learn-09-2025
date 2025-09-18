@@ -6,7 +6,7 @@ import {revalidatePath} from "next/cache";
 // Коли ми успішно додаємо пост, ця функція повідомляє Next.js, що кеш для маршруту / потрібно оновити.
 // Це гарантує, що наступний запит до головної сторінки отримає оновлений список постів.
 
-export const AddPost = async (formData: FormData) => {
+export const addPost = async (formData: FormData) => {
     const newPost = {
         userId: formData.get("userId"),
         title: formData.get("title"),
