@@ -1,5 +1,8 @@
 import {Params} from "@/types/Global";
 import {Post} from "@/types/Post";
+import {db} from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import {notFound} from "next/navigation";
 
 interface  Props {
     params: Params,
@@ -8,12 +11,21 @@ interface  Props {
 const PostPage = async ({ params }: Props) => {
     const {id} = await params;
 
-    const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
-    const post: Post = await response.json();
+    // Отримуємо посилання на один конкретний документ
+    const docRef = doc(db, 'posts', id);
+    // Отримуємо сам документ
+    const docSnap = await getDoc(docRef);
+    // Перевіряємо, чи існує документ
+    if (! docSnap.exists())
+        notFound(); // Якщо поста не існує, відображаємо сторінку 404
 
-    // Обробка, якщо пост не знайдено (хоча JSONPlaceholder завжди повертає об'єкт)
-    if (!post.id)
-        throw new Error('Failed to fetch post. Invalid ID.');
+    const postData = docSnap.data() as Post;
+    const post: Post = {
+        id: (await docSnap).id,
+        title: postData.title,
+        body: postData.body,
+        userId: postData.userId
+    };
 
     return (
         <div className={"flex min-h-screen flex-col items-center p-24"}>

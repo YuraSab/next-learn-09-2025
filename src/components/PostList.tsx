@@ -1,12 +1,31 @@
 import {Post} from "@/types/Post";
 import PostItem from "@/components/PostItem";
+import {collection, getDocs} from "@firebase/firestore";
+import {db} from "@/lib/firebase";
+
+interface FirestorePost {
+    title: string;
+    body: string;
+    userId: number;
+}
 
 const PostList = async () => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
-        // Додаємо опцію revalidate. Тут 60 секунд.
-        next: { revalidate: 60 }
+    // Отримуємо посилання на колекцію 'posts'
+    const postCollection = collection(db, 'posts');
+    // Отримуємо всі документи з колекції
+    const querySnapshot = await getDocs(postCollection);
+
+    const posts: Post[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data() as FirestorePost;
+        return {
+            id: doc.id,
+            title: data.title,
+            body: data.body,
+            userId: data.userId,
+        };
     });
-    const posts: Post[] = await  response.json();
+
+
     // Обрізаємо список до перших 10 постів для демонстрації
     const firstTen = posts.slice(0, 10);
 
@@ -14,7 +33,7 @@ const PostList = async () => {
         <div className={"space-y-4 w-full"}> {/* Додано клас w-full */}
             <h4 className={"text-2xl font-bold mb-4"}>Post list</h4>
             {
-                firstTen.map((post) => <PostItem post={post} key={post.id}/>)
+                firstTen.map((post, key) => <PostItem post={post} key={post.id}/>)
             }
         </div>
     )
