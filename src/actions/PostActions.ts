@@ -1,34 +1,51 @@
 "use server";
 
 import {revalidatePath} from "next/cache";
+import {collection, addDoc, deleteDoc, type DocumentData, CollectionReference} from "@firebase/firestore";
+import {db} from "@/lib/firebase";
+import {doc} from "firebase/firestore";
 
 // revalidatePath('/'): Це та сама On-demand Revalidation, про яку ми говорили.
 // Коли ми успішно додаємо пост, ця функція повідомляє Next.js, що кеш для маршруту / потрібно оновити.
 // Це гарантує, що наступний запит до головної сторінки отримає оновлений список постів.
 
+interface PostBody {
+    userId: string;
+    title: string;
+    body: string;
+    createdAt: string;
+}
+
 export const addPost = async (formData: FormData) => {
     const newPost = {
-        userId: formData.get("userId"),
-        title: formData.get("title"),
-        body: formData.get("body")
+        userId: formData.get("userId") as string,
+        title: formData.get("title") as string,
+        body: formData.get("body") as string,
+        createdAt: new Date().toISOString(), // Додамо дату створення
     };
 
     try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newPost)
-        });
-
-        if (!response.ok)
-            throw new Error('Failed to create post');
-
+        const postCollection = collection(db, 'posts') as CollectionReference<PostBody, DocumentData>;
+        await addDoc(postCollection, newPost);
         // On-demand Revalidation: оновлюємо кеш для головної сторінки
         revalidatePath("/");
+        return { success: true };
     } catch (error) {
         console.error('Error in Server Action:', error);
+        return { error: 'Failed to create post.' };
     }
+}
 
+
+export const deletePost = async (id: string) => {
+    try {
+        const ref = doc(db, 'posts', id)
+        await deleteDoc(ref);
+        // On-demand Revalidation: оновлюємо кеш
+        revalidatePath('/');
+        return { success: true };
+    } catch (error) {
+        console.error('Error in Server Action:', error);
+        return { error: 'Failed to delete post.' };
+    }
 }
