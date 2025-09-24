@@ -3,6 +3,7 @@ import {Post} from "@/types/Post";
 import {db} from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import {notFound} from "next/navigation";
+import Link from "next/link";
 
 interface  Props {
     params: Params,
@@ -33,6 +34,9 @@ const PostPage = async ({ params }: Props) => {
                 <h1 className={"text-3xl font-bold mb-4"}>{post.title}</h1>
                 <p className={"text-lg text-gray-700"}>{post.body}</p>
             </div>
+            <Link href={`/posts/edit/${post.id}`}>
+                Edit post
+            </Link>
         </div>
     )
 }

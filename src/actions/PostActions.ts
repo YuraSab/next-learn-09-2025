@@ -1,7 +1,7 @@
 "use server";
 
 import {revalidatePath} from "next/cache";
-import {collection, addDoc, deleteDoc, type DocumentData, CollectionReference} from "@firebase/firestore";
+import {collection, addDoc, deleteDoc, type DocumentData, CollectionReference, updateDoc} from "@firebase/firestore";
 import {db} from "@/lib/firebase";
 import {doc} from "firebase/firestore";
 
@@ -47,5 +47,27 @@ export const deletePost = async (id: string) => {
     } catch (error) {
         console.error('Error in Server Action:', error);
         return { error: 'Failed to delete post.' };
+    }
+}
+
+
+export const updatePost = async (formData: FormData) => {
+    const postId = formData.get('id') as string;
+    const updatedPost = {
+        title: formData.get('title') as string,
+        body: formData.get('body') as string,
+        updatedAt: new Date().toISOString(),
+    };
+
+    try {
+        const postRef = doc(db, 'posts', postId);
+        // @ts-ignore
+        await updateDoc(postRef, updatedPost);
+        revalidatePath(`/posts/${postId}`);
+        revalidatePath('/');
+        return { success: true };
+    } catch (error) {
+        console.error('Error in Server Action:', error);
+        return { error: 'Failed to update post.' };
     }
 }
