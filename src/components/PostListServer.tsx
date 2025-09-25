@@ -9,7 +9,7 @@ interface FirestorePost {
     userId: number;
 }
 
-const PostList = async () => {
+const PostListServer = async () => {
     // Отримуємо посилання на колекцію 'posts'
     const postCollection = collection(db, 'posts');
     // Отримуємо всі документи з колекції
@@ -39,4 +39,4 @@ const PostList = async () => {
     )
 }
 
-export default PostList;
+export default PostListServer;
