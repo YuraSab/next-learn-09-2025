@@ -161,13 +161,7 @@ _# Next.js Learning Journey
 * **Переваги:** Автоматична ревалідація при фокусуванні сторінки (`revalidateOnFocus: true`), спрощена обробка станів (`isLoading`, `isError`).
 * **Конфлікт кешування:** У Next.js App Router зазвичай використовується:
     * **Server Components + Next.js `fetch` (або Server Actions):** Використовується вбудоване серверне кешування та `revalidatePath`.
-    * **Client Components + SWR/React Query:** Використовується клієнтське кешування для інтерактивних, динамічних даних.
-
-
-
-
-
-### 14. Принципи вибору між SWR та Server Actions
+    * **Client Components + SWR/React Query:** Використовується клієнтське кешування для інтерактивних, ### 14. Принципи вибору між SWR та Server Actions
 
 * **Server Components + Server Actions (Краща альтернатива в Next.js):**
     * **Коли:** Для більшості операцій CRUD, які не потребують миттєвої клієнтської інтерактивності (наприклад, відображення списку, додавання поста).

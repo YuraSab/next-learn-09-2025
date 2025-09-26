@@ -4,6 +4,7 @@ import {db} from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import {notFound} from "next/navigation";
 import Link from "next/link";
+import CommentSection from "@/components/CommentSection";
 
 interface  Props {
     params: Params,
@@ -37,6 +38,7 @@ const PostPage = async ({ params }: Props) => {
             <Link href={`/posts/edit/${post.id}`}>
                 Edit post
             </Link>
+            <CommentSection postId={post.id}/>
         </div>
     )
 }

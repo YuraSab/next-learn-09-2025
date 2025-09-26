@@ -4,6 +4,7 @@ import {revalidatePath} from "next/cache";
 import {collection, addDoc, deleteDoc, type DocumentData, CollectionReference, updateDoc} from "@firebase/firestore";
 import {db} from "@/lib/firebase";
 import {doc} from "firebase/firestore";
+import {Comment} from "@/types/Comment";
 
 // revalidatePath('/'): Це та сама On-demand Revalidation, про яку ми говорили.
 // Коли ми успішно додаємо пост, ця функція повідомляє Next.js, що кеш для маршруту / потрібно оновити.
@@ -69,5 +70,37 @@ export const updatePost = async (formData: FormData) => {
     } catch (error) {
         console.error('Error in Server Action:', error);
         return { error: 'Failed to update post.' };
+    }
+}
+
+interface CommentBody {
+    author: string,
+    text: string,
+    createdAt: string,
+}
+
+
+export const addComment = async ( formData: FormData ) => {
+    const postId = formData.get('postId') as string;
+    // Якщо ми додаємо коментар, ми повинні знати, до якого поста він належить.
+    if (!postId)
+        return { error: 'Post ID is missing.' };
+
+    const newComment: CommentBody = {
+        author: 'Anonymous user', // Заглушка, поки не додамо Auth
+        text: formData.get('text') as string,
+        createdAt: new Date().toISOString(),
+    };
+
+    try {
+        // Шлях: /posts/{postId}/comments
+        const commentRef = collection(db, 'posts', postId, 'comments') as CollectionReference<CommentBody>;
+        await addDoc(commentRef, newComment);
+        // Примітка: Нам НЕ потрібен revalidatePath тут,
+        // оскільки onSnapshot автоматично оновить клієнт!
+        return { success: true };
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        return { error: 'Failed to add comment.' };
     }
 }
