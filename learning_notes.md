@@ -1,4 +1,4 @@
-_# Next.js Learning Journey
+## 📝 Next.js Learning Journey
 
 ## 🚀 Крок 1: Створення та запуск проєкту
 
