@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode}) => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             setIsLoading(false);
+            console.log("currentUser", currentUser);
         })
         // Важливо: відписуємося від Listener при демонтажі
         return () => unsubscribe();

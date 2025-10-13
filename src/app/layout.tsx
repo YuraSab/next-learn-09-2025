@@ -3,6 +3,7 @@ import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import SWRProvider from "@/providers/SWRProvider";
 import {AuthProvider} from "@/context/AuthContext";
+import AuthStatus from "@/components/AuthStatus";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -30,7 +31,15 @@ export default function RootLayout({
                 <AuthProvider> {/* Обгортаємо весь додаток */}
                     {/* Обгортаємо тут, щоб SWR був доступний усім Client Components */}
                     <SWRProvider>
-                        {children}
+                        <header className={"w-full border-bottom min-h-30 flex items-center justify-between py-6 px-24"}>
+                            <h2 className={"text-4xl font-bold "}>Logo</h2>
+                            <div className={""}>
+                                <AuthStatus/>
+                            </div>
+                        </header>
+                        <main>
+                            {children}
+                        </main>
                     </SWRProvider>
                 </AuthProvider>
             </body>
