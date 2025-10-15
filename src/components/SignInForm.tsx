@@ -5,6 +5,7 @@ import {useRouter} from "next/navigation";
 import {signInWithEmailAndPassword} from "@firebase/auth";
 import {auth} from "@/lib/firebase";
 import {setSessionCookie} from "@/actions/auth";
+import {signInWithGitHub, signInWithGoogle} from "@/lib/authProviders";
 
 const SignInForm = () => {
     const [email, setEmail] = useState<string>("");
@@ -24,6 +25,15 @@ const SignInForm = () => {
             router.push('/');
         } catch (error) {
             setError(error.message || 'Помилка входу. Перевірте email та пароль.');
+        }
+    }
+
+    const handleSocialSignIn = async (providerFunction: () => Promise<{ success: boolean; error?: string }>) => {
+        const result = await providerFunction();
+        if (result.success) {
+            router.push('/');
+        } else {
+            setError(result.error || 'Помилка входу через соціальну мережу.');
         }
     }
 
@@ -59,9 +69,27 @@ const SignInForm = () => {
             <button className={"bg-blue-600 hover:bg-blue-700 font-bold text-white rounded w-full py-2 px-4"}>
                 Login
             </button>
+
+            <div className="flex flex-col space-y-2">
+                <button
+                    type="button" // Важливо: type="button", щоб не відправляти форму
+                    onClick={() => handleSocialSignIn(signInWithGoogle)}
+                    className="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                >
+                    {/*  */} Увійти з Google
+                </button>
+                <button
+                    type="button"
+                    onClick={() => handleSocialSignIn(signInWithGitHub)}
+                    className="flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded"
+                >
+                    {/*  */} Увійти з GitHub
+                </button>
+            </div>
+
             {error && <p className={"text-red-500 mt-4"}>{error}</p>}
         </form>
-)
+    )
 }
 
 export default SignInForm;
