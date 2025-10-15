@@ -4,6 +4,7 @@ import {FormEvent, useState} from "react";
 import {createUserWithEmailAndPassword} from "@firebase/auth";
 import {auth} from "@/lib/firebase";
 import {useRouter} from "next/navigation";
+import {setSessionCookie} from "@/actions/auth";
 
 const SignUpForm = () => {
     const [email, setEmail] = useState<string>('');
@@ -16,7 +17,12 @@ const SignUpForm = () => {
         setError(null);
 
         try {
-            await createUserWithEmailAndPassword(auth, email, password)
+            // 1. Відправляємо токен на сервер для встановлення куки
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+            // 2. Отримуємо ID токен від Firebase
+            const idToken = await userCredential.user.getIdToken();
+            // 3. Відправляємо токен на сервер для встановлення куки
+            await setSessionCookie(idToken);
             router.push('/');
         } catch (err: any) {
             // Обробка помилок Firebase (наприклад, недійсний email, слабкий пароль)

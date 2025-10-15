@@ -17,7 +17,16 @@ interface PostBody {
     createdAt: string;
 }
 
-export const addPost = async (formData: FormData) => {
+interface FormState {
+    message: string,
+}
+
+// Перший виклик: При першому рендерингу prevState є початковим значенням, яке ви передали у хук (initialState).
+// Наступні виклики: Після першої відправки форми, prevState — це попереднє значення стану, яке повернув ваш Server Action.
+// У вашому простому прикладі addPost ви просто повертаєте нове повідомлення.
+// Однак, якщо ваш стан був би складним об'єктом (наприклад, містив список помилок валідації або проміжних результатів), ви могли б використовувати prevState для поступового оновлення стану без втрати попередньої інформації.
+// Навіть якщо ви його не використовуєте, він повинен бути присутнім у сигнатурі функції, щоб Next.js знав, як правильно зв'язати Server Action з хуком useActionState.
+export const addPost = async (prevState: FormState, formData: FormData): Promise<FormState> => {
     const newPost = {
         userId: formData.get("userId") as string,
         title: formData.get("title") as string,
@@ -25,15 +34,21 @@ export const addPost = async (formData: FormData) => {
         createdAt: new Date().toISOString(), // Додамо дату створення
     };
 
+    if (newPost.title.length < 5 || newPost.body.length < 10) {
+        return { message: 'Помилка: Заголовок має бути не менше 5, а тіло - 10 символів.' };
+    }
+
     try {
         const postCollection = collection(db, 'posts') as CollectionReference<PostBody, DocumentData>;
         await addDoc(postCollection, newPost);
         // On-demand Revalidation: оновлюємо кеш для головної сторінки
         revalidatePath("/");
-        return { success: true };
+        // return { success: true };
+        return { message: 'Пост успішно додано!' };
     } catch (error) {
         console.error('Error in Server Action:', error);
-        return { error: 'Failed to create post.' };
+        // return { error: 'Failed to create post.' };
+        return { message: 'Помилка сервера: Не вдалося додати пост.' };
     }
 }
 

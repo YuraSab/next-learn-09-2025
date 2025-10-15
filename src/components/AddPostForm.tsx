@@ -1,35 +1,49 @@
 'use client';
 
-import React, {useRef} from "react";
+import React, {useActionState, useRef} from "react";
 import {useRouter} from "next/navigation";
 import {addPost} from "@/actions/PostActions";
+import SubmitButton from "@/components/SubmitButton";
+import {useFormState} from "react-dom";
+
+const initialState = {
+    message: '',
+};
 
 const AddPostForm = () => {
-    const formRef = useRef<HTMLFormElement>(null);
-    const router = useRouter();
+    // 1. Ініціалізуємо useFormState
+    // state: поточний стан, який повертає Server Action
+    // formAction: функція, яку ми передамо в атрибут action форми
+    const [state, formAction] = useActionState(addPost, initialState);
+
+    // const formRef = useRef<HTMLFormElement>(null);
+    // const router = useRouter();
 
     // Важливо: Ми змінили action={...} на onSubmit={...}. Це означає, що ми перейшли від Server Actions до звичайного клієнтського запиту fetch
     return (
-        <form
-            ref={formRef}
-            // Передаємо сам Server Action в `action` форми
-            // Next.js автоматично обробляє передачу FormData
-            action={async (formData) => {
-                await addPost(formData);
-                // Ця клієнтська логіка виконується після завершення Server Action
-                router.refresh();
-                formRef.current?.reset();
-            }}
-            className="w-full max-w-lg mx-auto p-8 border rounded-lg shadow-lg bg-white"
-        >
-        {/*<form*/}
-        {/*    ref={formRef}*/}
-        {/*    onSubmit={(event) => {*/}
-        {/*        event.preventDefault();*/}
-        {/*        handleSubmitApiRoute(new FormData(event.currentTarget));*/}
-        {/*    }}*/}
-        {/*    className="w-full max-w-lg mx-auto p-8 border rounded-lg shadow-lg bg-white"*/}
-        {/*>*/}
+        // <form
+        //     ref={formRef}
+        //     // Передаємо сам Server Action в `action` форми
+        //     // Next.js автоматично обробляє передачу FormData
+        //     action={async (formData) => {
+        //         await addPost(formData);
+        //         // Ця клієнтська логіка виконується після завершення Server Action
+        //         router.refresh();
+        //         formRef.current?.reset();
+        //     }}
+        //     className="w-full max-w-lg mx-auto p-8 border rounded-lg shadow-lg bg-white"
+        // >
+
+        // <form
+        //     ref={formRef}
+        //     onSubmit={(event) => {
+        //         event.preventDefault();
+        //         handleSubmitApiRoute(new FormData(event.currentTarget));
+        //     }}
+        //     className="w-full max-w-lg mx-auto p-8 border rounded-lg shadow-lg bg-white"
+        // >
+
+        <form action={formAction} className="w-full max-w-lg mx-auto p-8 border rounded-lg shadow-lg bg-white">
             <h2 className="text-2xl font-bold mb-6 text-center">Додати новий пост</h2>
             <div className="mb-4">
                 <label htmlFor="title" className="block text-gray-700 font-bold mb-2">Заголовок</label>
@@ -52,13 +66,15 @@ const AddPostForm = () => {
                 ></textarea>
             </div>
             <div className="flex items-center justify-between">
-                <button
-                    type="submit"
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                >
-                    Відправити
-                </button>
+                <SubmitButton text={"Add post"}/>
             </div>
+
+            {/* 2. Відображення повідомлення про успіх/помилку */}
+            {state.message && (
+                <p className={`pt-2 ${state.message.startsWith('Помилка') ? 'text-red-500' : 'text-green-500'}`}>
+                    {state.message}
+                </p>
+            )}
         </form>
     );
 }

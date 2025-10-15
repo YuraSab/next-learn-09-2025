@@ -4,6 +4,7 @@ import {FormEvent, useState} from "react";
 import {useRouter} from "next/navigation";
 import {signInWithEmailAndPassword} from "@firebase/auth";
 import {auth} from "@/lib/firebase";
+import {setSessionCookie} from "@/actions/auth";
 
 const SignInForm = () => {
     const [email, setEmail] = useState<string>("");
@@ -15,7 +16,11 @@ const SignInForm = () => {
         e.preventDefault();
         setError(null);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // 1. Отримуємо ID токен від Firebase
+            const idToken = await userCredential.user.getIdToken();
+            // 2. Відправляємо токен на сервер для встановлення куки
+            await setSessionCookie(idToken);
             router.push('/');
         } catch (error) {
             setError(error.message || 'Помилка входу. Перевірте email та пароль.');

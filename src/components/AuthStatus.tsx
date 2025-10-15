@@ -6,6 +6,7 @@ import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {signOut} from "@firebase/auth";
 import {auth} from "@/lib/firebase";
+import {clearSessionCookie} from "@/actions/auth";
 
 const AuthStatus = () => {
     const {user, isLoading} = useAuth();
@@ -13,7 +14,9 @@ const AuthStatus = () => {
 
     const handleSignOut = async () => {
         await signOut(auth);
-        router.push("/signin");
+        await clearSessionCookie();
+        // Оскільки clearSessionCookie містить redirect('/signin'), цей рядок
+        // (router.push('/signin')) не буде виконаний
     }
 
     if (isLoading) {
