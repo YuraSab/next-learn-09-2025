@@ -3,8 +3,12 @@
 import {revalidatePath} from "next/cache";
 import {collection, addDoc, deleteDoc, type DocumentData, CollectionReference, updateDoc} from "@firebase/firestore";
 import {db} from "@/lib/firebase";
-import {doc} from "firebase/firestore";
+import {doc, getDoc} from "firebase/firestore";
 import {Comment} from "@/types/Comment";
+import {getAuthenticatedServerUID} from "@/lib/serverAuth";
+import {notFound} from "next/navigation";
+import {Post} from "@/types/Post";
+import {adminDB} from "@/lib/firebaseAdmin";
 
 // revalidatePath('/'): Це та сама On-demand Revalidation, про яку ми говорили.
 // Коли ми успішно додаємо пост, ця функція повідомляє Next.js, що кеш для маршруту / потрібно оновити.
@@ -27,8 +31,15 @@ interface FormState {
 // Однак, якщо ваш стан був би складним об'єктом (наприклад, містив список помилок валідації або проміжних результатів), ви могли б використовувати prevState для поступового оновлення стану без втрати попередньої інформації.
 // Навіть якщо ви його не використовуєте, він повинен бути присутнім у сигнатурі функції, щоб Next.js знав, як правильно зв'язати Server Action з хуком useActionState.
 export const addPost = async (prevState: FormState, formData: FormData): Promise<FormState> => {
+    const uid = await getAuthenticatedServerUID();
+
+    // 1. ПЕРЕВІРКА АВТЕНТИФІКАЦІЇ
+    if (!uid) {
+        return { message: 'Помилка: Ви повинні бути авторизовані для додавання постів.' };
+    }
+
     const newPost = {
-        userId: formData.get("userId") as string,
+        userId: uid, // 2. ЗАПИСУЄМО РЕАЛЬНИЙ UID
         title: formData.get("title") as string,
         body: formData.get("body") as string,
         createdAt: new Date().toISOString(), // Додамо дату створення
@@ -52,12 +63,43 @@ export const addPost = async (prevState: FormState, formData: FormData): Promise
     }
 }
 
+const doesUserHavePermissionForPost = async (postId): Promise<boolean> => {
+    const uid = await getAuthenticatedServerUID();
+
+    if (!uid)
+        return false;
+
+    try {
+        // const docRef = await doc(db, 'posts', postId)
+        // const docSnap = await getDoc(docRef);
+
+        // Використовуємо AdminDB (повні права)
+        const docSnap = await adminDB.collection('posts').doc(postId).get();
+
+        // if (!docSnap.exists())
+        //     return false;
+
+        const postData = docSnap.data() as Post;
+
+        return postData?.userId == uid;
+    } catch (error) {
+        console.error('Error in Server Action:', error);
+        return false;
+    }
+}
 
 export const deletePost = async (id: string) => {
     try {
-        const ref = doc(db, 'posts', id)
-        await deleteDoc(ref);
-        // On-demand Revalidation: оновлюємо кеш
+        if ( !await doesUserHavePermissionForPost(id) )
+            return { message: 'Помилка: Ви не маєте доступу до видалення даного поста.' };
+
+        // Видалення також краще робити через AdminDB
+        // const docRef = await doc(db, 'posts', id)
+        // await deleteDoc(docRef);
+
+        await adminDB.collection('posts').doc(id).delete();
+
+        // // On-demand Revalidation: оновлюємо кеш
         revalidatePath('/');
         return { success: true };
     } catch (error) {
@@ -76,9 +118,15 @@ export const updatePost = async (formData: FormData) => {
     };
 
     try {
-        const postRef = doc(db, 'posts', postId);
+        if ( !await doesUserHavePermissionForPost(postId) )
+            return { message: 'Помилка: Ви не маєте доступу до видалення даного поста.' };
+
+        // Редагування також через AdminDB
+        // const docRef = await doc(db, 'posts', postId)
         // @ts-ignore
-        await updateDoc(postRef, updatedPost);
+        // await updateDoc(docRef, updatedPost);
+        await adminDB.collection('posts').doc(postId).update(updatedPost);
+
         revalidatePath(`/posts/${postId}`);
         revalidatePath('/');
         return { success: true };
