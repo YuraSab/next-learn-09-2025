@@ -12,7 +12,7 @@ interface Props {
     postId: string,
 }
 
-const getLikeData = async (postId: string, uid: string): Promise<{ likeCount: number, isLiked: boolean }> => {
+const getLikeData = async (postId: string, uid: string | null): Promise<{ likeCount: number, isLiked: boolean }> => {
     // 1. Отримуємо список лайків
     const likeCollection = collection(db, 'posts', postId, 'likes');
     const likeSnap = await getDocs(likeCollection);
@@ -39,10 +39,11 @@ const LikesSection = async ({ postId }: Props) => {
     return (
         <div>
             <div>
-                <LikeButtonV2 postId={postId} initialLiked={isLiked}/>
-            </div>
-            <div>
-                { likeCount }
+                <LikeButtonV2
+                    postId={postId}
+                    initialLiked={isLiked}
+                    initialLikeCount={likeCount}
+                />
             </div>
         </div>
     );
