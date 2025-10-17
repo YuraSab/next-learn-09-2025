@@ -1,7 +1,15 @@
 "use server";
 
 import {revalidatePath} from "next/cache";
-import {collection, addDoc, deleteDoc, type DocumentData, CollectionReference, updateDoc} from "@firebase/firestore";
+import {
+    collection,
+    addDoc,
+    deleteDoc,
+    type DocumentData,
+    CollectionReference,
+    updateDoc,
+    getDocs, setDoc
+} from "@firebase/firestore";
 import {db} from "@/lib/firebase";
 import {doc, getDoc} from "firebase/firestore";
 import {Comment} from "@/types/Comment";
@@ -9,6 +17,9 @@ import {getAuthenticatedServerUID} from "@/lib/serverAuth";
 import {notFound} from "next/navigation";
 import {Post} from "@/types/Post";
 import {adminDB} from "@/lib/firebaseAdmin";
+import {Like} from "@/types/Like";
+import {firestore} from "firebase-admin";
+import DocumentReference = firestore.DocumentReference;
 
 // revalidatePath('/'): Це та сама On-demand Revalidation, про яку ми говорили.
 // Коли ми успішно додаємо пост, ця функція повідомляє Next.js, що кеш для маршруту / потрібно оновити.
@@ -166,4 +177,32 @@ export const addComment = async ( formData: FormData ) => {
         console.error('Error adding comment:', error);
         return { error: 'Failed to add comment.' };
     }
+}
+
+
+
+export const likePost = async (postId: string): Promise<void> => {
+    const uid = await getAuthenticatedServerUID();
+    if ( !uid )
+        return;
+
+    // Використовуємо doc з клієнтського SDK, оскільки тут потрібні посилання
+    // Хоча для Server Actions безпечніше використовувати adminDB,
+    // тут клієнтський SDK також спрацює, оскільки ми перевіряємо uid на початку.
+    const likeDocRef = doc(db, 'posts', postId, 'likes', uid);
+    const likeSnap = await getDoc(likeDocRef);
+    const isLiked = likeSnap.exists()
+
+    if (isLiked) {
+        // Якщо документ існує -> користувач хоче забрати лайк (Unlike)
+        await deleteDoc(likeDocRef);
+        console.log(`Лайк від ${uid} видалено.`);
+    } else {
+        // Якщо документ не існує -> користувач хоче додати лайк (Like)
+        // Додаємо новий документ. Найкраще додати timestamp.
+        // @ts-ignore
+        await setDoc(likeDocRef, { timestamp: new Date().toISOString() });
+        console.log(`Лайк від ${uid} додано.`);
+    }
+    revalidatePath(`/posts/${postId}`);
 }

@@ -6,6 +6,7 @@ import {notFound} from "next/navigation";
 import Link from "next/link";
 import CommentSection from "@/components/CommentSection";
 import {Metadata} from "next";
+import LikesSection from "@/components/LikesSection";
 
 interface  Props {
     params: Params,
@@ -74,6 +75,7 @@ const PostPage = async ({ params }: Props) => {
             <Link href={`/posts/edit/${post.id}`}>
                 Edit post
             </Link>
+            <LikesSection postId={post.id}/>
             <CommentSection postId={post.id}/>
         </div>
     )
